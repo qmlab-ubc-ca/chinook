@@ -26,12 +26,15 @@
 #SOFTWARE.
 
 import linecache
-import pkg_resources
+import importlib.resources
 
 
 
 a_file = 'atomic_mass.txt'
-filename = pkg_resources.resource_filename(__name__,a_file)
+filename = importlib.resources.files(__name__).joinpath(a_file)
+_TEXT = (importlib.resources.files(__package__) / a_file).read_text(encoding="utf-8")
+_LINES = _TEXT.splitlines()
+
 def get_mass_from_number(N_at):
     '''
 
@@ -48,7 +51,8 @@ def get_mass_from_number(N_at):
     ***
     '''
     try:
-        return float(linecache.getline(filename,int(N_at)).split('\t')[2][:-1])
+        fields = _LINES[int(N_at) - 1].split('\t')
+        return float(fields[2])
     except IndexError:
         print('ERROR: Invalid atomic number, returning mass = 0.')
         return 0.0

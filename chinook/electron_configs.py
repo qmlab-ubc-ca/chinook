@@ -41,7 +41,7 @@
 import numpy as np
 import scipy.special as sc
 import matplotlib.pyplot as plt
-import pkg_resources
+import importlib.resources
 import linecache
 from math import factorial
 from math import gamma
@@ -61,8 +61,8 @@ ndic={1:1,2:2,3:3,4:3.7,5:4,6:4.2}
 
 
 textnm="electron_configs.txt"
-
-filename = pkg_resources.resource_filename(__name__,textnm)
+filename = importlib.resources.files(__name__).joinpath(textnm)
+_LINES = (importlib.resources.files(__package__) / textnm).read_text(encoding="utf-8").splitlines()
 
 def get_con(filename,Z):
     
@@ -83,7 +83,7 @@ def get_con(filename,Z):
     ***
     '''
     try:
-        return linecache.getline(filename,int(Z)).split(',')[1].strip()
+        return _LINES[int(Z) - 1].split(',')[1].strip()
     except IndexError:
         print('ERROR: Invalid atomic number, returning  nothing')
         return ''

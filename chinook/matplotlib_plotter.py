@@ -208,7 +208,7 @@ class interface:
         cid = self.fig.canvas.mpl_connect('button_press_event',onclick)
         self.slide_w.on_changed(img_slide)
         self.radio_ax.on_clicked(button_click)
-        plt.tight_layout()
+        plt.gcf().set_layout_engine("tight")
         plt.show()
         
     def find_cursor(self):

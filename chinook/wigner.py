@@ -81,7 +81,7 @@ def s_lims(j,m,mp):
 def small_D(j,mp,m,Euler_B):
     '''
     Wigner's little d matrix, defined as         _
-     j                                          \           (-1)^(mp-m+s)                 2j+m-mp-2s         mp-m+2s
+     j                                          \\           (-1)^(mp-m+s)                 2j+m-mp-2s         mp-m+2s
     d    (B) = sqrt((j+mp)!(j-mp)!(j+m)!(j-m)!)  >  ----------------------------- cos(B/2)          sin(B/2)
      mp,m                                       /_s  (j+m-s)!s!(mp-m+s)!(j-mp-s)!
     
