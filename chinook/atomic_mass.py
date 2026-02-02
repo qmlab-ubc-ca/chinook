@@ -28,12 +28,9 @@
 import linecache
 import importlib.resources
 
-
-
 a_file = 'atomic_mass.txt'
-import importlib.resources
-
 with importlib.resources.path("chinook", a_file) as file_path:
+    filename = str(file_path)
     with open(file_path, encoding="utf-8") as f:
         _TEXT = f.read()
 _LINES = _TEXT.splitlines()

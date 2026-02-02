@@ -60,15 +60,14 @@ A = 10**-10
 ndic={1:1,2:2,3:3,4:3.7,5:4,6:4.2}
 
 
-textnm="electron_configs.txt"
-import importlib.resources
-
+textnm = "electron_configs.txt"
 with importlib.resources.path("chinook", textnm) as file_path:
+    filename = str(file_path)
     with open(file_path, encoding="utf-8") as f:
         _TEXT = f.read()
 _LINES = _TEXT.splitlines()
 
-def get_con(filename,Z):
+def get_con(Z, filename=filename):
     
     '''
     Get electron configuration for a given element, from electron_configs.txt.
