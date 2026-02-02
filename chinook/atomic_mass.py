@@ -31,8 +31,8 @@ import importlib.resources
 
 
 a_file = 'atomic_mass.txt'
-filename = importlib.resources.files(__name__).joinpath(a_file)
-_TEXT = (importlib.resources.files(__package__) / a_file).read_text(encoding="utf-8")
+filename = importlib.resources.files("chinook").joinpath(a_file)
+_TEXT = filename.read_text(encoding="utf-8")
 _LINES = _TEXT.splitlines()
 
 def get_mass_from_number(N_at):

@@ -61,8 +61,8 @@ ndic={1:1,2:2,3:3,4:3.7,5:4,6:4.2}
 
 
 textnm="electron_configs.txt"
-filename = importlib.resources.files(__name__).joinpath(textnm)
-_LINES = (importlib.resources.files(__package__) / textnm).read_text(encoding="utf-8").splitlines()
+filename = importlib.resources.files("chinook").joinpath(textnm)
+_LINES = filename.read_text(encoding="utf-8").splitlines()
 
 def get_con(filename,Z):
     
