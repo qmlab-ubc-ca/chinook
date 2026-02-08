@@ -305,6 +305,7 @@ def kmesh(ang,X,Y,kz,Vo=None,hv=None,W=None):
         Y = kp*np.sin(ph-ang)
     try:
         Zeff = kz_kpt(hv,kp,W,Vo)
+        print('the effective kz is',Zeff)
     except TypeError:    
         Zeff = kz*np.ones(np.shape(X))
     

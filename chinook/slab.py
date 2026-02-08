@@ -641,15 +641,19 @@ def H_surf(surf_basis,avec,H_bulk,Rmat,lenbasis):
     for ii in range(len(H_old)): #iterate over all original Hamiltonian hopping paths
         hi = H_old[ii] #temporary Hamiltonian matrix element to consider
         R_latt = np.mod(np.around(np.dot(Rcv[ii],av_i),3),1) #what is the hopping path, in new coordinate frame, in terms of modular vector (mod lattice vector)
-        R_compare = np.linalg.norm(R_latt-(cv_dict['{:d}-{:d}'.format(hi[0],hi[1])][:,2:5]),axis=1)#,np.linalg.norm((cv_dict['{:d}-{:d}'.format(hi[0],hi[1])][:,2:]-(1-R_latt)),axis=1)) #two possible choices: 
+        cv = cv_dict['{:d}-{:d}'.format(hi[0],hi[1])]
+        print(R_latt,cv[:,2:5])
+        R_compare = min(np.linalg.norm(R_latt-(cv[:,2:5]),axis=1),np.linalg.norm((cv[:,2:]-((1-R_latt)%1)),axis=1)) #two possible choices: 
+        #R_compare = np.linalg.norm((cv[:,2:]-((1-R_latt)%1)),axis=1) #two possible choices: 
 
         try:
             
-            match = np.where(R_compare<5e-4)[0]
+            match = np.where(R_compare<5e-2)[0]
+            #print('Match: ',R_compare, match)
 
 
             for mi in match:#find the match
-                tmp_H = [*cv_dict['{:d}-{:d}'.format(hi[0],hi[1])][int(mi)][:2],*np.around(Rcv[ii],4),hi[-1]]
+                tmp_H = [*cv[int(mi)][:2],*np.around(Rcv[ii],4),hi[-1]]
 
                 H_new.append(tmp_H)
 

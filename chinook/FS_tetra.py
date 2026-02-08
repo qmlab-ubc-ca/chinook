@@ -360,6 +360,8 @@ def fermi_surface_2D(TB, npts=100, kfix=(2,0), energy=0, shift=np.array([0,0,0])
 
     ax.set_aspect(1)
     if do_plot:
+        fig.savefig("FS.svg",transparent=True)
+        fig.savefig("FS.png",transparent=True)
         return ax
     else:
         plt.close(fig)

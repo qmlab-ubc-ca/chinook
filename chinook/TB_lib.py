@@ -322,6 +322,7 @@ class TB_model:
                             elif H_args['spin']['order']=='A':
                                 ham_AF = Hlib.AFM_order(self.basis,H_args['spin']['dS'],H_args['spin']['p_up'],H_args['spin']['p_dn'])
                                 ham_list = ham_list + ham_AF
+                                print('check_point')
                 H_obj = gen_H_obj(ham_list,executable)
                 return H_obj
             except KeyError:
@@ -461,6 +462,7 @@ class TB_model:
             fig=plt.figure()
             fig.set_tight_layout(False)
             ax=fig.add_subplot(111)
+
             
         ax.axhline(y=0,color='k',lw=1.5,ls='--')
         for b in self.Kobj.kcut_brk:
@@ -476,6 +478,8 @@ class TB_model:
             ax.set_xlim(self.Kobj.kcut[0],self.Kobj.kcut[-1])
             ax.set_ylim(win_min,win_max) 
         ax.set_ylabel("Energy (eV)")
+        plt.tick_params(axis='both', direction='in')
+        fig.savefig("band.pdf",transparent=True)
 
         return ax  
     

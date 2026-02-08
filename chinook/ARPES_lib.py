@@ -212,7 +212,40 @@ class experiment:
         try:
             self.scaling = ARPES_dict['scaling']
         except KeyError:
-            self.scaling = 1
+            self.scaling = np.array([1])
+        try:
+            self.scaling_orb = ARPES_dict['scaling_orb']
+        except KeyError:
+            self.scaling = np.array([1])
+        try:
+            self.spectral_func = ARPES_dict['spectral']
+        except KeyError:
+            self.spectral_func = False
+        try:
+            self.cdw = ARPES_dict['CDW']
+        except KeyError:
+            self.cdw = np.array([0,0])
+        try:
+            self.cdw_g_d = ARPES_dict['CDW_g_D']
+        except KeyError:
+            self.cdw_g_d = np.array([0,0.1])
+        try:
+            self.proj = ARPES_dict['CDW_proj']
+        except KeyError:
+            self.proj = None
+        try:
+            self.sproj = ARPES_dict['spectral_proj']
+        except KeyError:
+            self.sproj = None
+        try:
+            self.plotG = ARPES_dict['plotG']
+        except KeyError:
+            self.plotG = False
+        try:
+            self.plotB = ARPES_dict['plotB']
+        except KeyError:
+            self.plotB = False
+
 
     def update_pars(self,ARPES_dict,datacube=False):
         '''
@@ -292,6 +325,7 @@ class experiment:
             None, however *experiment* attributes *X*, *Y*, *ph*, *TB.Kobj*, *Eb*, *Ev*, *cube*
             are modified.
         '''
+        
         if self.Vo>0:
             Vo_args = (self.Vo, self.hv, self.W)
         else:
@@ -305,8 +339,45 @@ class experiment:
             self.X = X
             self.Y = Y
             
-            k_arr,self.ph = K_lib.kmesh(self.ang,self.X,self.Y,self.kz,*Vo_args)      
+            k_arr,self.ph = K_lib.kmesh(self.ang,self.X,self.Y,self.kz,*Vo_args)
+
+        ## testing stage ###
+        #  This part of chinook will plot CDW at a defined q vector.
+        #  The default plot range is the unit cell, the k space calculated will be [-pi/a - abs(qx)] to [pi/a +abs(qx)] and [-pi/b - abs(qy)] to [pi/b - abs(qy)] 
+
+        if self.cdw.any() != 0:
             
+            self.bvec = K_lib.bvectors(self.TB.avec)
+            
+            b1 = np.linalg.norm(self.bvec[0])
+            b2 = np.linalg.norm(self.bvec[1])
+
+            qx_list = [abs(q_vector[0]) for q_vector in self.cdw]
+            qy_list = [abs(q_vector[1]) for q_vector in self.cdw]
+            qx_max = max(qx_list)
+            qy_max = max(qy_list)
+            #qy = self.cdw[1]
+
+            #x_q = np.linspace(self.cube[0][0]+qx,self.cube[0][1]+qx,self.cube[0][2])
+            #y_q = np.linspace(self.cube[1][0]+qy,self.cube[1][1]+qy,self.cube[1][2])
+            #X_q,Y_q = np.meshgrid(x_q,y_q)
+
+            #self.X_q = X_q
+            #self.Y_q = Y_q
+            
+            self.nx = self.cube[0][2]
+            self.ny = self.cube[1][2]
+
+            x_0 = np.linspace(-b1/2-qx_max,b1/2+qx_max,self.nx)
+            y_0 = np.linspace(-b2/2-qy_max,b2/2+qy_max,self.ny)
+            self.X_0,self.Y_0 = np.meshgrid(x_0,y_0)
+            assert np.shape(self.X_0) == (self.ny,self.nx) ## X_0[0] is y, X_0[1] is x
+            #self.X_q = X_q
+            #self.Y_q = Y_q
+
+            k_arr_0,self.ph = K_lib.kmesh(self.ang,self.X_0,self.Y_0,self.kz,*Vo_args)
+
+      
     
         elif self.coord_type=='angle':
             k_arr = tilt.gen_kpoints(self.hv-self.W,(self.cube[0][2],self.cube[1][2]),self.cube[0][:2],self.cube[1][:2],self.kz)
@@ -322,17 +393,182 @@ class experiment:
         self.Eb,self.Ev = self.TB.solve_H()
 #        else:
 #            self.Eb,self.Ev = self.TB.Eband,self.TB.Evec
+
+        ## create a second TB with shifted coordinate if CDW q factor is not zero
+
+        if  self.cdw.any() != 0:
+            
+            ## TB_0 is the original TB, without shifted by q vector
+            
+            self.TB_0 = self.TB
+            self.TB_0.Kobj = K_lib.kpath(k_arr_0)
+            self.Eb_0,self.Ev_0 = self.TB_0.solve_H()
+            
+            assert np.shape(self.Eb_0)[-1] == len(self.basis)
+            nstate = len(self.basis)
+            self.Eb_q = []
+            self.Eb_qw = []
+            #self.Eb_q.append(self.Eb_0)
+            self.Eb_0 = np.reshape(self.Eb_0,(nstate * self.nx * self.ny)) 
+            
+            # the weight of each band according to projection 
+            O = self.CDW_proj(self.proj)
+            right_product = np.einsum('ij,ljm->lim',O,self.Ev_0)
+            O_vals = np.einsum('ijk,ijk->ik',np.conj(self.Ev_0),right_product)
+            O_vals = np.real(O_vals)
+            self.Eb_w = O_vals
+            self.Eb_w = np.reshape(self.Eb_w,(nstate * self.nx * self.ny))
+
+            assert len(self.Eb_w) == len(self.Eb_0)
+
+            #self.Eb_q.append(self.Eb_0)
+            self.Eb_0_3d = np.reshape(self.Eb_0,(self.ny,self.nx,nstate),'C')  # axis = 0, axis = 1, axis = 2
+            self.Eb_w0_3d = np.reshape(self.Eb_w,(self.ny,self.nx,nstate),'C')
+            #print(np.shape(self.Eb_0_3d))
+
+            #self.Eb_0 = np.reshape(self.Eb_0_3d,(nstate * self.nx * self.ny)) 
+
+            ##test shift ##
+            for i in range(len(self.cdw)):
+                qx = int(self.cdw[i][0])
+                qy = int(self.cdw[i][1])
+                self.Eb_0_1 = np.roll(self.Eb_0_3d,shift=qx,axis=1)
+                self.Eb_0_2 = np.roll(self.Eb_0_1,shift=qy,axis=0)
+                self.Eb_q.append(np.reshape(self.Eb_0_2,(nstate* self.nx * self.ny)))
+
+                self.Eb_w_1 = np.roll(self.Eb_w0_3d,shift=qx,axis=1)
+                self.Eb_w_2 = np.roll(self.Eb_w_1,shift=qy,axis=0)
+                self.Eb_qw.append(np.reshape(self.Eb_w_2,(nstate* self.nx * self.ny)))
+            
+            self.Eb_0 = np.reshape(self.Eb_0_3d,(nstate * self.nx * self.ny)) 
+            self.Eb_w0 = np.reshape(self.Eb_w0_3d,(nstate * self.nx * self.ny)) 
+
+
+            #for i in range(len(self.cdw)):
+            #    qx = self.cdw[i][0]
+            #    qy = self.cdw[i][1]
+            #    self.new_Eb = np.roll(self.Eb_0,shift=qx,axis=1)
+            #    self.new_Eb = np.roll(self.Eb_0,shift=qy,axis=2)
+                #self.new_Eb = np.reshape(self.new_Eb,(nstate * nx * ny))
+                #self.Eb_q.append(self.new_Eb)
+        
+        else:
+            if self.sproj == None:
+                self.Eb = np.reshape(self.Eb,(np.shape(self.Eb)[-1]*np.shape(self.X)[0]*np.shape(self.X)[1]))  # self.X[1] is X, self.X[0] is Y
+            else:
+                self.nx = self.cube[0][2]
+                self.ny = self.cube[1][2]
+                nstate = len(self.basis)
+                self.Eb = np.reshape(self.Eb,(np.shape(self.Eb)[-1]*np.shape(self.X)[0]*np.shape(self.X)[1])) 
+                #O = self.CDW_proj(self.sproj)
+                #print('printing O',O)
+                ### for special calculation: phase dependenet projection
+                O_phase = self.phase_proj(self.sproj,self.TB.Kobj.kpts)
+                #right_product = np.einsum('ij,ljm->lim',O,self.Ev)
+                right_product = np.einsum('lji,ljm->lim',O_phase,self.Ev) #lji or lij ?
+                O_vals = np.einsum('ijk,ijk->ik',np.conj(self.Ev),right_product)
+                O_vals = np.real(O_vals)
+                self.Eb_w = O_vals
+                self.Eb_w = np.reshape(self.Eb_w,(nstate * self.nx * self.ny))
+                assert len(self.Eb_w) == len(self.Eb)
+
         
         if len(self.cube[2])==2:
             #user only passed the energy limits, not the grain--automate generation of the grain size
             band_dE_max = find_mean_dE(self.Eb)
             NE_pts = int(10*(self.cube[2][1]-self.cube[2][0])/band_dE_max)
             self.cube[2].append(NE_pts)
+
+    def phase_proj(self,proj,kpts):
+        ## now the input should be [1,0,0,0,0,....]
+        proj = np.array(proj)
+        nk = len(kpts)
+        nb = len(self.TB.basis)
+        proj_orb = np.nonzero(proj)
+        print('proj_orb = ',proj_orb)
+        #O = np.identity(len(self.TB.basis),dtype=complex)
+        assert len(proj)== nb
+        pvec_phase = np.zeros(len(proj),dtype=complex)
+        O_phase = np.zeros((nk,len(proj),len(proj)),dtype=complex)
+        ## create the outer product for a certain projection. in this case proj is a vector with the same size as the eigenvector
+        #pvec = np.zeros(len(self.TB.basis),dtype=complex)
+        #pvec = pvec + proj
+        for i in range(nk):
+            for orb in proj_orb[0]:
+                rx,ry,rz = self.TB.basis[orb].pos
+                #print('pos',rx,ry,rz)
+                kx = kpts[:,0][i]
+                ky = kpts[:,1][i]
+                kz = kpts[:,2][i]
+                pvec_phase[orb] = proj[orb] * np.exp(1j*kx*rx) * np.exp(1j*ky*ry) * np.exp(1j*kz*rz)
+
+
+            #d = 1.9196
+            #d1 = 1.945
+            #d2 = 0.025
+            
+            #O8 = 1 *np.exp(-1j*ky*d)
+            #O9 = 1* np.exp(-1j*kx*d)
+            #O10 = 1* np.exp(1j*ky*d)
+            #O11 = 1* np.exp(1j*kx*d)
+            #O24 = 1 *np.exp(-1j*ky*d)* np.exp(-1j*ky*2*d)*np.exp(-1j*kx*2*d)
+            #O25 = 1* np.exp(-1j*kx*d)* np.exp(-1j*ky*2*d)*np.exp(-1j*kx*2*d)
+            #O26 = 1* np.exp(1j*ky*d)* np.exp(-1j*ky*2*d)*np.exp(-1j*kx*2*d)
+            #O27 = 1* np.exp(1j*kx*d)* np.exp(-1j*ky*2*d)*np.exp(-1j*kx*2*d)
+            #pvec_phase = np.array([0,0,0,0,0,0,0,0,  - O8 , O9, O10, -O11 ,   0,0,0,0 , 
+            #                       0,0,0,0,0,0,0,0,    0 , 0, 0, 0    ,0,0,0,0,
+            #                       0,0,0,0,0,0,0,0,  0,0,0,0  ,0,0,0,0,
+            #                       0,0,0,0,0,0,0,0,  0,0,0,0  ,0,0,0,0,
+            #                       0,0,0,0,0,0,0,0,  0,0,0,0 ,   0,0,0,0 , 
+            #                       0,0,0,0,0,0,0,0,    0 , 0, 0, 0    ,0,0,0,0,
+            #                       0,0,0,0,0,0,0,0,  0,0,0,0  ,0,0,0,0,
+            #                       0,0,0,0,0,0,0,0,  0,0,0,0  ,0,0,0,0]) #8 Ni cell
+            #                       0,0,0,0,0,0,0,0,   -1 *np.exp(-1j*ky*d)* np.exp(-1j*ky*2*d)*np.exp(-1j*kx*2*d) ,1* np.exp(-1j*kx*d)* np.exp(-1j*ky*2*d)*np.exp(-1j*kx*2*d), 1* np.exp(1j*ky*d)* np.exp(-1j*ky*2*d)*np.exp(-1j*kx*2*d) , -1* np.exp(1j*kx*d)* np.exp(-1j*ky*2*d)*np.exp(-1j*kx*2*d) ,  0,0,0,0]) # 4 Ni cell
+            #pvec_phase = np.array([1,0,0,0,0,0,0,0,  0,0,0,0 ,0,0,0,0, 
+            #                       0,0,0,0,-1,0,0,0,  0,0,0,0 ,0,0,0,0]) # 4 Ni cell
+
+            #pvec_phase = np.array([0,0,0,0,0,0,0,0, 1*np.exp(1j*-phase) , -1*np.exp(1j*phase) , -1*np.exp(-1j*-phase) , 1*np.exp(-1j*phase) ,0,0,0,0]) # 2 Ni cell
+            #pvec_phase = np.array([0,0,0,0,0,0,0,0, 1*ikx_p , -1*iky_p , -1*ikx_n , 1*iky_n ,0,0,0,0]) # 2 Ni cell
+            #pvec_phase = np.array([0,0,0,0,0,0,0,0,1*ikx_p , -1*iky_p , -1*ikx_n , 1*iky_n ,-1*ikx_p , 1*iky_p , 1*ikx_n , -1*iky_n]) # 2 Ni cell
+            #pvec_phase = np.array([0,0,0,0,0,0,0,0,-1 *np.exp(-1j*ky*d) ,1* np.exp(-1j*kx*d), 1* np.exp(1j*ky*d) , -1* np.exp(1j*kx*d), 1 *np.exp(-1j*ky*d) ,-1* np.exp(-1j*kx*d), -1* np.exp(1j*ky*d) , 1* np.exp(1j*kx*d)]) # 2 Ni cell
+            #pvec_phase = np.array([0,0,0,0,0,0,0,0,1*iky_n*ikz_p , -1*ikx_n*ikz_p , -1*iky_p*ikz_n , 1*ikx_p*ikz_n,0,0,0,0]) # 2 Ni cell
+            #pvec_phase = np.array([0,0,0,0,0,0,0,0,O8,-O9,-O10,O11,0,0,0,0]) # 2 Ni cell
+
+#            pvec_phase = np.array([0,0,0,0,0,0,0,0,1*iky_n*ikz_p , -1*ikx_n*ikz_p , -1*iky_p*ikz_n , 1*ikx_p*ikz_n,-1*iky_n*ikz_n , 1*ikx_n*ikz_n , 1*iky_p*ikz_p , -1*ikx_p*ikz_p]) # 2 Ni cell
+            #pvec_phase = np.array([0,0,0,0,0,0,0,0, 1, -1, -1, 1 ,0,0,0,0]) # 2 Ni cell
+            #pvec_phase = np.array([0,0,0,0,0,0,0,0, 1*iky_n - 1*iky_p, -1*ikx_n + 1*ikx_p, -1*iky_p + 1*iky_n, 1*ikx_p - 1*ikx_n ,0,0,0,0]) # Ni1 + Ni2 cell
+            #pvec_phase = np.array([0,0,0,0,- 1*iky_n + 1*iky_p , -1*ikx_n +1*ikx_p , 0, 0]) #1 Ni cell
+            #pvec_phase = np.array([1*ikx_p,1*iky_p,1*ikx_n,1*iky_n]) # o only 
+            #pvec_phase = np.array([1,-1,1,-1]) # o only 
+            #print('pvec_phase',pvec_phase)
+            O = np.outer(np.conj(pvec_phase),pvec_phase)
+            O_phase[i]=O
         
-        self.Eb = np.reshape(self.Eb,(np.shape(self.Eb)[-1]*np.shape(self.X)[0]*np.shape(self.X)[1])) 
+        #print(O_phase[100])
+        return O_phase
         
 
+    def CDW_proj(self,proj):
+        proj = np.array(proj)
+        O = np.identity(len(self.TB.basis))
         
+        tmp = np.zeros((len(proj),2))
+        if np.shape(proj) == np.shape(self.TB.basis):
+            ## create the outer product for a certain projection. in this case proj is a vector with the same size as the eigenvector
+            pvec = np.zeros(len(self.TB.basis),dtype=complex)
+            pvec = pvec + proj
+            O = np.outer(pvec,pvec)
+        else:
+            ## otherwise the input is [[orb1,weight1],[orb2,weight2]]
+            tmp[:,0] = proj
+            tmp[:,1] = 1.0
+            proj = tmp
+            pvec = np.zeros(len(self.TB.basis),dtype=complex)
+            pvec[np.real(proj[:,0]).astype(int)] = proj[:,1]
+            O = O*pvec
+        return O
+
+
     def truncate_model(self):
         '''
         For slab calculations, the number of basis states becomes a significant memory load,
@@ -430,44 +666,81 @@ class experiment:
 
         dE = (self.cube[2][1]-self.cube[2][0])/self.cube[2][2]            
         dig_range = (self.cube[2][0]-5*dE,self.cube[2][1]+5*dE)
-           
-
-        self.pks = np.array([[i,np.floor(np.floor(i/nstates)/np.shape(self.X)[1]),np.floor(i/nstates)%np.shape(self.X)[1],self.Eb[i]] for i in range(len(self.Eb)) if dig_range[0]<=self.Eb[i]<=dig_range[-1]])
-        if len(self.pks)==0:
-            raise ValueError('ARPES Calculation Error: no states found in energy window. Consider refining the region of interest')
-
-        self.Mk = np.zeros((len(self.pks),2,3),dtype=complex)
-
-        kn = (2.*me/hb**2*(self.hv+self.pks[:,3]-self.W)*q)**0.5*A
-
-        self.th = np.array([np.arccos((kn[i]**2-self.X[int(self.pks[i,1]),int(self.pks[i,2])]**2-self.Y[int(self.pks[i,1]),int(self.pks[i,2])]**2)**0.5/kn[i]) if (kn[i]**2-self.X[int(self.pks[i,1]),int(self.pks[i,2])]**2-self.Y[int(self.pks[i,1]),int(self.pks[i,2])]**2)>=0 else -1 for i in range(len(self.pks))])
-
         
-        self.prefactors = np.array([o.sigma*np.exp((-0.5/abs(self.mfp))*abs(o.depth)) for o in self.basis])
-        self.Largs,self.Margs,Gmats,self.orbital_pointers = all_Y(self.basis) 
-        self.Gbasis = Gmats[self.orbital_pointers]
-        self.proj_arr = projection_map(self.basis)
-        
-        rad_dict = {'hv':self.hv,'W':self.W,'rad_type':self.rad_type,'rad_args':self.rad_args,'phase_shifts':self.phase_shifts}
-        self.Bfuncs,self.radint_pointers = radint_lib.make_radint_pointer(rad_dict,self.basis,dig_range)
+        ## self.Eb is ordered in Y, X, energy
 
+        print("check point1")
+        if not self.spectral_func:
+            print("check point2")
 
-        print('Begin computing matrix elements: ')
-        
-        valid_indices = np.array([i for i in range(len(self.pks)) if (self.th[i]>=0)])# and self.cube[2][0]<=self.pks[i][3]<=self.cube[2][1])])
-
-        if self.threads>0:
-            self.thread_Mk(self.threads,valid_indices)
+            self.pks = np.array([[i,np.floor(np.floor(i/nstates)/np.shape(self.X)[1]),np.floor(i/nstates)%np.shape(self.X)[1],self.Eb[i]] for i in range(len(self.Eb)) if dig_range[0]<=self.Eb[i]<=dig_range[-1]])
         else:
-            self.serial_Mk(valid_indices)
+            print("check point3")
+            if self.cdw.any() != 0:
+                self.pks_q = []
+                self.pks_qw = []
+                self.pks_0 = np.array([[i,np.floor(np.floor(i/nstates)/self.nx),np.floor(i/nstates)%self.nx,self.Eb_0[i]] for i in range(len(self.Eb_0))])
+                self.pks_w0 = np.array([[i,np.floor(np.floor(i/nstates)/self.nx),np.floor(i/nstates)%self.nx,self.Eb_w0[i]] for i in range(len(self.Eb_0))])
 
-        print('\nDone matrix elements')
+                for j in range(len(self.cdw)):
+                    self.pks_q.append(np.array([[i,np.floor(np.floor(i/nstates)/self.nx),np.floor(i/nstates)%self.nx,self.Eb_q[j][i]] for i in range(len(self.Eb_q[0]))]))
+                    self.pks_qw.append(np.array([[i,np.floor(np.floor(i/nstates)/self.nx),np.floor(i/nstates)%self.nx,self.Eb_qw[j][i]] for i in range(len(self.Eb_qw[0]))]))
 
+            else:
+                print("check point4")
+                if self.sproj == None:
+                    print("Check point5")
+                    self.pks = np.array([[i,np.floor(np.floor(i/nstates)/np.shape(self.X)[1]),np.floor(i/nstates)%np.shape(self.X)[1],self.Eb[i]] for i in range(len(self.Eb))])
+                else:
+                    self.pks = np.array([[i,np.floor(np.floor(i/nstates)/np.shape(self.X)[1]),np.floor(i/nstates)%np.shape(self.X)[1],self.Eb[i]] for i in range(len(self.Eb))])
+                    self.pks_w = np.array([[i,np.floor(np.floor(i/nstates)/np.shape(self.X)[1]),np.floor(i/nstates)%np.shape(self.X)[1],self.Eb_w[i]] for i in range(len(self.Eb_w))])
+
+            
+
+
+
+
+        if not (self.cdw.any() != 0):
+            if  (len(self.pks)==0):
+                raise ValueError('ARPES Calculation Error: no states found in energy window. Consider refining the region of interest')
+
+            self.Mk = np.zeros((len(self.pks),2,3),dtype=complex)
+
+            kn = (2.*me/hb**2*(self.hv+self.pks[:,3]-self.W)*q)**0.5*A
+
+            self.th = np.array([np.arccos((kn[i]**2-self.X[int(self.pks[i,1]),int(self.pks[i,2])]**2-self.Y[int(self.pks[i,1]),int(self.pks[i,2])]**2)**0.5/kn[i]) if (kn[i]**2-self.X[int(self.pks[i,1]),int(self.pks[i,2])]**2-self.Y[int(self.pks[i,1]),int(self.pks[i,2])]**2)>=0 else -1 for i in range(len(self.pks))])
+
+
+            self.prefactors = np.array([o.sigma*np.exp((-0.5/abs(self.mfp))*abs(o.depth)) for o in self.basis])
+            self.Largs,self.Margs,Gmats,self.orbital_pointers = all_Y(self.basis) 
+            print("L:",self.Largs,"M:",self.Margs,"Gaunt",Gmats,"pointer",self.orbital_pointers)
+            self.Gbasis = Gmats[self.orbital_pointers]  #Gbasis select from Gmats
+            self.proj_arr = projection_map(self.basis)  #express basis in spherical harmonics
+            if self.rad_type == 'hydrogen_ext':
+                rad_dict = {'hv':self.hv,'W':self.W,'rad_type':self.rad_type,'rad_args':self.rad_args,'phase_shifts':self.phase_shifts,'scaling':self.scaling,'scaling_orb':self.scaling_orb}
+            else:
+                rad_dict = {'hv':self.hv,'W':self.W,'rad_type':self.rad_type,'rad_args':self.rad_args,'phase_shifts':self.phase_shifts}
+            self.Bfuncs,self.radint_pointers = radint_lib.make_radint_pointer(rad_dict,self.basis,dig_range)
+
+        #if self.spectral_func == True, will skip calculating matrix element and output only spectral function
+
+        if self.spectral_func == False:
+
+            print('Begin computing matrix elements: ')
+        
+            valid_indices = np.array([i for i in range(len(self.pks)) if (self.th[i]>=0)])# and self.cube[2][0]<=self.pks[i][3]<=self.cube[2][1])])
+
+            if self.threads>0:
+                self.thread_Mk(self.threads,valid_indices)
+            else:
+                self.serial_Mk(valid_indices)
+
+            print('\nDone matrix elements')
+
+        else:
+            print('Done calculating spectral function')
 
         return True
-    
-    
-    
     
     
     def M_compute(self,i):
@@ -482,22 +755,37 @@ class experiment:
               projection for dm = -1,0,1 (columns) and spin down or up (rows) for a given
               state in k and energy.
         '''
+        # dm refers to selection rules
         nstates = len(self.TB.basis)
         phi = self.ph[int(self.pks[i,0]/nstates)]
 
         th = self.th[i]
         Ylm_calls = Yvect(self.Largs,self.Margs,th,phi)[self.orbital_pointers]
-        
+        #print('Ylm_calls',Ylm_calls)
         Mtmp = np.zeros((2,3),dtype=complex)
-        B_eval = np.array([[b[0](self.pks[i,3]),b[1](self.pks[i,3])] for b in self.Bfuncs])
+        B_eval = np.array([[b[0](self.pks[i,3]),b[1](self.pks[i,3])] for b in self.Bfuncs])   #len(self.pks) = total number of k points - the k without Eband. the first 3 pos are indexes, last one is Eband of that k point.
+        #print(B_eval)
         pref = np.einsum('i,ij->ij',np.einsum('i,i->i',self.prefactors,self.Ev[int(self.pks[i,0]/nstates),:,int(self.pks[i,0]%nstates)]),B_eval[self.radint_pointers])  
         Gtmp = np.einsum('ij,ijkl->ikl',self.proj_arr,np.einsum('ijkl,ijkl->ijkl',Ylm_calls,self.Gbasis))
         if self.spin:
             Mtmp[0,:] = np.einsum('ij,ijk->k',pref[:int(len(self.basis)/2)],Gtmp[:int(len(self.basis)/2)])
             Mtmp[1,:] = np.einsum('ij,ijk->k',pref[int(len(self.basis)/2):],Gtmp[int(len(self.basis)/2):])
         else:
-            Mtmp[0,:] = np.einsum('ij,ijk->k',pref,Gtmp)
-                   
+            if self.plotG == True:
+                shape = pref.shape
+                print(shape)
+                dummy = np.ones(shape)
+                Mtmp[0,:] = np.einsum('ij,ijk->k',dummy,Gtmp)
+                #print(Mtmp.shape)
+
+            if self.plotB == True:
+                shape = Gtmp.shape
+                print(shape)
+                dummy = np.ones(shape)
+                Mtmp[0,:] = np.einsum('ij,ijk->k',pref,dummy)
+                #print(Mtmp.shape)
+            else:
+                Mtmp[0,:] = np.einsum('ij,ijk->k',pref,Gtmp)
         return Mtmp
     
     
@@ -697,6 +985,7 @@ class experiment:
         else:
             fermi = np.ones(self.cube[2][2])
         return fermi
+    
 
     def spectral(self,ARPES_dict=None,slice_select=None,add_map = False,plot_bands=False,ax=None,colourmap=None):
         
@@ -726,7 +1015,7 @@ class experiment:
             
             - **ax**: matplotlib Axes, for further modifications to plot only if **slice_select** True
         '''
-        if not hasattr(self,'Mk'):
+        if not hasattr(self,'Mk') and not self.spectral_func:
             self.datacube()
             
         if ARPES_dict is not None:
@@ -736,42 +1025,115 @@ class experiment:
         if colourmap is None:
             colourmap = cm.magma
         
-        
-        if self.sarpes is not None:
-            spin_Mk = self.sarpes_projector()
-            if self.coord_type == 'momentum':
-                pol = pol_2_sph(self.pol)
+        if self.spectral_func == False:
 
-                M_factor = np.power(abs(np.einsum('ij,j->i',spin_Mk[:,int((self.sarpes[0]+1)/2),:],pol)),2)
-            elif self.coord_type == 'angle':
-                all_pol = self.gen_all_pol()
-                M_factor = np.power(abs(np.einsum('ij,ij->i',spin_Mk[:,int((self.sarpes[0]+1)/2),:],all_pol)),2)
-        else:
-            if self.coord_type == 'momentum':
-                pol = pol_2_sph(self.pol)
+            if self.sarpes is not None:
+                spin_Mk = self.sarpes_projector()
+                if self.coord_type == 'momentum':
+                    pol = pol_2_sph(self.pol)
 
-                M_factor = np.sum(np.power(abs(np.einsum('ijk,k->ij',self.Mk,pol)),2),axis=1)
-            elif self.coord_type == 'angle':
-                all_pol = self.gen_all_pol()
-                M_factor = np.sum(np.power(abs(np.einsum('ijk,ik->ij',self.Mk,all_pol)),2),axis=1)                
-        
-        SE = self.SE_gen()
-        fermi = self.T_distribution()    
-        w = np.linspace(*self.cube[2])
-        
-        I = np.zeros((self.cube[1][2],self.cube[0][2],self.cube[2][2]))
-
-        if np.shape(SE)==np.shape(I):
-            SE_k = True
-        else:
-            SE_k = False
-
-        for p in range(len(self.pks)):
-
-            if not SE_k:
-                I[int(np.real(self.pks[p,1])),int(np.real(self.pks[p,2])),:] += M_factor[p]*np.imag(-1./(np.pi*(w-self.pks[p,3]-(SE-0.00005j))))*fermi
+                    M_factor = np.power(abs(np.einsum('ij,j->i',spin_Mk[:,int((self.sarpes[0]+1)/2),:],pol)),2)
+                elif self.coord_type == 'angle':
+                    all_pol = self.gen_all_pol()
+                    M_factor = np.power(abs(np.einsum('ij,ij->i',spin_Mk[:,int((self.sarpes[0]+1)/2),:],all_pol)),2)
             else:
-                I[int(np.real(self.pks[p,1])),int(np.real(self.pks[p,2])),:]+= M_factor[p]*np.imag(-1./(np.pi*(w-self.pks[p,3]-(SE[int(np.real(self.pks[p,1])),int(np.real(self.pks[p,2])),:]-0.00005j))))*fermi 
+                if self.coord_type == 'momentum':
+                    pol = pol_2_sph(self.pol)
+
+                    M_factor = np.sum(np.power(abs(np.einsum('ijk,k->ij',self.Mk,pol)),2),axis=1)
+                elif self.coord_type == 'angle':
+                    all_pol = self.gen_all_pol()
+                    M_factor = np.sum(np.power(abs(np.einsum('ijk,ik->ij',self.Mk,all_pol)),2),axis=1)                
+        
+            SE = self.SE_gen()
+            fermi = self.T_distribution()    
+            w = np.linspace(*self.cube[2])
+        
+            I = np.zeros((self.cube[1][2],self.cube[0][2],self.cube[2][2]))
+
+            if np.shape(SE)==np.shape(I):
+                SE_k = True
+            else:
+                SE_k = False
+
+            for p in range(len(self.pks)):
+
+                kx = int(np.real(self.pks[p,1]))
+                ky = int(np.real(self.pks[p,2]))
+                ek = self.pks[p,3]
+                if not SE_k:
+                    I[kx,ky,:] += M_factor[p]*np.imag(-1./(np.pi*(w-ek-(SE-0.00005j))))*fermi
+                else:
+                    I[kx,ky,:]+= M_factor[p]*np.imag(-1./(np.pi*(w-ek-(SE[kx,ky,:]-0.00005j))))*fermi 
+        else:
+            
+            if self.cdw.any() != 0:
+                print('plotting CDW spectral function')
+                fermi = self.T_distribution()    
+                w = np.linspace(*self.cube[2])
+                I = np.zeros((self.cube[1][2],self.cube[0][2],self.cube[2][2]))
+
+                for p in range(len(self.pks_0)):
+                    kx = int(np.real(self.pks_0[p,1]))
+                    ky = int(np.real(self.pks_0[p,2]))
+                    ek = self.pks_0[p,3]
+                    weight_k = self.pks_w0[p,3]**2
+                    
+                    ## for cuprates
+                    #ek_q = 0
+                    #for j in range(len(self.cdw)):
+                    #    ek_q = self.pks_qw[j][p,3]
+                    #    ek_q = ek_q + ek_q
+                        #print('check')
+                    #ek_q = self.pks_qw[0][p,3]
+                    #SE = -0.01j#self.CDW_SE(w,ek_q)
+
+                    ## for Nikelates
+                    
+
+                    #SE1 = -0.05j 
+                    #SE2 = -0.01j
+                    cdw_SE = -0.03j
+                    for j in range(len(self.cdw)):
+                        weight_q = self.pks_qw[j][p,3]
+                        ek_q = self.pks_q[j][p,3]
+                        #SE2 = self.CDW_SE(w,ek_q)
+                        cdw_SE = cdw_SE #+ SE2
+                    #I[kx,ky,:]+= (weight_q*weight_k)*-1./np.pi * np.imag(1./(w-ek-(cdw_SE-0.00005j))) #+ (1-weight_k)*-1./np.pi * np.imag(1./(w-ek-(SE1-0.00005j)))
+                        I[kx,ky,:]+= weight_k*(1-weight_q)*-1./np.pi * np.imag(1./(w-ek-(cdw_SE-0.00005j))) +(1-weight_k)*weight_q*-1./np.pi * np.imag(1./(w-ek_q-(cdw_SE-0.00005j)))
+                    #I[kx,ky,:]+= -1./np.pi * np.imag(1./(w-ek-(cdw_SE-0.00005j))) 
+            else:
+                print('plotting spectral function')
+                SE = self.SE_gen()
+                fermi = self.T_distribution()    
+                w = np.linspace(*self.cube[2])
+        
+                I = np.zeros((self.cube[1][2],self.cube[0][2],self.cube[2][2]))
+
+                if np.shape(SE)==np.shape(I):
+                    SE_k = True
+                else:
+                    SE_k = False
+
+                for p in range(len(self.pks)):
+                    if self.sproj == None:
+                        kx = int(np.real(self.pks[p,1]))    
+                        ky = int(np.real(self.pks[p,2]))
+                        ek = self.pks[p,3]
+                    else:
+                        kx = int(np.real(self.pks[p,1]))    
+                        ky = int(np.real(self.pks[p,2]))
+                        ek = self.pks[p,3]
+                        weight_k = self.pks_w[p,3]
+
+
+                    if not SE_k:
+                        if self.sproj == None:
+                            I[kx,ky,:] += np.imag(-1./(np.pi*(w-ek-(SE-0.00005j))))*fermi
+                        else:
+                            I[kx,ky,:] += np.imag(-1./(np.pi*(w-ek-(SE-0.00005j))))*fermi*weight_k
+                    else:
+                        I[kx,ky,:]+= np.imag(-1./(np.pi*(w-ek-(SE[kx,ky:]-0.00005j))))*fermi 
 
 
         kxg = (self.cube[0][2]*self.dk/(self.cube[0][1]-self.cube[0][0]) if abs(self.cube[0][1]-self.cube[0][0])>0 else 0)
@@ -791,7 +1153,21 @@ class experiment:
             return I,Ig,ax_img
         else:
             return I,Ig
-    
+
+    def CDW_SE(self,w,ek_q):
+        g = self.cdw_g_d[0]
+        T = self.T/11604
+        Del = self.cdw_g_d[1]
+        ak = w - ek_q
+        bk = ((ak)**2 + Del**2)**(1/2)
+
+        pre_SE = g*T/bk
+        img_SE = pre_SE*(-1j)
+        real_SE = pre_SE * (1/np.pi) * np.log(np.abs((ak+bk)/(ak-bk)))
+        SE = real_SE + img_SE
+        return SE
+
+
     def gen_imap(self,I_arr):
         new_map = imap.intensity_map(len(self.maps),I_arr,self.cube,self.kz,self.T,self.hv,self.pol,self.dE,self.dk,self.SE_args,self.sarpes,self.ang)
         return new_map

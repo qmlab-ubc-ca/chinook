@@ -39,7 +39,6 @@ import chinook.Ylm as Ylm
 
 
 
-
 class wavefunction:
     '''
     This class acts to reorganize basis and wavefunction information in a more

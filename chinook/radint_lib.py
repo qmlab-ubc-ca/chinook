@@ -189,6 +189,7 @@ def define_radial_wavefunctions(rad_dict,basis):
     
     orbital_funcs = {}
     orbitals = gen_orb_labels(basis)
+    print(orbitals)
 
     if 'rad_type' not in rad_dict.keys():
         rad_dict['rad_type'] = 'slater'
@@ -202,8 +203,22 @@ def define_radial_wavefunctions(rad_dict,basis):
             orbital_funcs[o] = econ.hydrogenic_exec(*orbitals[o])
 
     elif rad_dict['rad_type'].lower() == 'hydrogen_ext':
+        scale_list = rad_dict['scaling']
+        scale_orb_list = rad_dict['scaling_orb']
+        i=int(0)
         for o in orbitals:
-            orbital_funcs[o] = econ.hydrogenic_exec_ext(*orbitals[o],rad_dict['scaling'])
+            if len(scale_list) == 1:
+                orbital_funcs[o] = econ.hydrogenic_exec_ext(*orbitals[o],scale_list[0],scale_orb_list[0])
+            else:
+                print(scale_list)
+                scale = scale_list[i]
+                scale_orb = scale_orb_list[i]
+                print(scale)
+                print(*orbitals[o])
+                orbital_funcs[o] = econ.hydrogenic_exec_ext(*orbitals[o],scale,scale_orb)
+                i=i+1
+
+            
 
     elif rad_dict['rad_type'].lower() == 'grid':
         if 'rad_args' not in rad_dict.keys():
@@ -273,6 +288,7 @@ def gen_orb_labels(basis):
     for o in basis:
         o_str = '{:d}-{:d}-{:d}'.format(o.atom,o.n,o.l)
         if o_str not in orbitals.keys():
+            print("check")
             orbitals[o_str] = [o.Z,o.label]
     return orbitals
     

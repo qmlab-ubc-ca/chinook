@@ -74,7 +74,7 @@ def dos_broad(TB,NK,NE=None,dE=None,origin = np.zeros(3)):
     Elin = np.arange(TB.Eband.min()-10*dE,TB.Eband.max()+10*dE,dE*0.5)
     DOS = np.zeros(len(Elin))
     for ki in range(len(kpts)):
-        sys.stdout.write('\r'+progress_bar(ki+1,len(kpts)))
+        #sys.stdout.write('\r'+progress_bar(ki+1,len(kpts)))
         for bi in range(len(TB.basis)): #iterate over all bands
 
             tmp_add =  gaussian(TB.Eband[ki,bi],Elin,dE)
@@ -245,7 +245,7 @@ def ne_broad_analytical(TB,NK,NE=None,dE=None,origin=np.zeros(3),plot = True):
 
     nE = np.zeros(len(Elin))
     for ki in range(len(kpts)):
-        sys.stdout.write('\r'+progress_bar(ki+1,len(kpts)))
+        #sys.stdout.write('\r'+progress_bar(ki+1,len(kpts)))
         for bi in range(len(TB.basis)): #iterate over all bands
 
             tmp_add =  error_function(TB.Eband[ki,bi],Elin,dE)
@@ -347,7 +347,7 @@ def dos_tetra(TB,NE,NK):
     
     DOS = np.zeros(len(Elin))
     for ki in range(len(tetra)):
-        sys.stdout.write('\r'+progress_bar(ki+1,len(tetra)))
+        #sys.stdout.write('\r'+progress_bar(ki+1,len(tetra)))
         for bi in range(len(TB.basis)): #iterate over all bands
             DOS += band_contribution(TB.Eband[tetra[ki]][:,bi],Elin,len(tetra))
     print('DOS calculation complete')
@@ -491,7 +491,7 @@ def pdos_tetra(TB,NE,NK,proj):
     for ki in range(len(tetra)):
         eivecs = TB.Evec[tetra[ki],:,:]
         projection_avg = proj_avg(eivecs,projection_matrix)
-        sys.stdout.write('\r'+progress_bar(ki+1,len(tetra)))
+        #sys.stdout.write('\r'+progress_bar(ki+1,len(tetra)))
         for bi in range(len(TB.basis)): #iterate over all bands
             DOS_tetra = band_contribution(TB.Eband[tetra[ki]][:,bi],Elin,len(tetra))
             pDOS += DOS_tetra*projection_avg[bi]
