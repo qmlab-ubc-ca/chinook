@@ -1,4 +1,4 @@
 numpy<2
 matplotlib<3.9
 scipy
-chinook @ git+https://github.com/christineay/chinook.git@fix-warnings
+chinook @ git+https://github.com/qmlab-ubc-ca/chinook.git
