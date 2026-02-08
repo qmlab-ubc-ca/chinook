@@ -1,0 +1,5 @@
+.DS_Store
+*.ipynb
+.vscode/settings.json
+build/
+chinook.egg-info/
