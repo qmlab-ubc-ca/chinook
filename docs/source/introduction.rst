@@ -10,7 +10,7 @@ Installation
 The entire source code for *chinook* is available as a github repository, which can be accessed
 by visiting our repo_. 
 
-.. _repo: https://github.com/rpday/chinook
+.. _repo: https://github.com/qmlab-ubc-ca/chinook
 
 For most convenient access, *chinook* is registered and available for download via *pip*. Open a command line shell and execute
 ::
