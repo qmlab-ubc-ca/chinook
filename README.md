@@ -9,7 +9,7 @@ Thanks!
 
 -- The chinook team
 
-## Gettings started
+## Getting started
 
 To get started, install the latest version of chinook and its dependencies with `pip`:
 ```sh
