@@ -41,8 +41,7 @@
 import numpy as np
 import scipy.special as sc
 import matplotlib.pyplot as plt
-import pkg_resources
-import linecache
+import importlib.resources
 from math import factorial
 from math import gamma
 
@@ -60,11 +59,14 @@ A = 10**-10
 ndic={1:1,2:2,3:3,4:3.7,5:4,6:4.2}
 
 
-textnm="electron_configs.txt"
+from chinook.resource_loader import load_text_lines
 
-filename = pkg_resources.resource_filename(__name__,textnm)
+textnm = "electron_configs.txt"
 
-def get_con(filename,Z):
+def _lines():
+    return load_text_lines('chinook', textnm)
+
+def get_con(Z, filename=None):
     
     '''
     Get electron configuration for a given element, from electron_configs.txt.
@@ -83,7 +85,7 @@ def get_con(filename,Z):
     ***
     '''
     try:
-        return linecache.getline(filename,int(Z)).split(',')[1].strip()
+        return _lines()[int(Z) - 1].split(',')[1].strip()
     except IndexError:
         print('ERROR: Invalid atomic number, returning  nothing')
         return ''
@@ -136,7 +138,7 @@ def Z_eff(Z_ind,orb):
     
     l_dic = {"s":0,"p":1,"d":2,"f":3}  
     l_dic_inv = {0:"s",1:"p",2:"d",3:"f"}
-    e_conf = get_con(filename,Z_ind)
+    e_conf = get_con(Z_ind)
     n = int(orb[0])
     if orb[1].isalpha():
         l=orb[1] # if orbital string already written in form of 2p for example, rather than 21, simply take l as 'p'

@@ -179,7 +179,6 @@ def lattice_pars_to_vecs(norm_a,norm_b,norm_c,ang_a,ang_B,ang_y):
 
 def neighbours(pos,num):
     '''
-
     Build series of lattice points using the pos arrays, out to some fixed number of points away
     from origin
 
@@ -192,6 +191,7 @@ def neighbours(pos,num):
     *return*:
 
         - **inside**: numpy array of Nx3 float, all points in neighbouring region of lattice
+    '''
     
     num_symm= 2*num+1
     

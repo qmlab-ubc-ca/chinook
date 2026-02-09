@@ -821,7 +821,7 @@ class experiment:
              
          if ax_img is None:
              fig,ax_img = plt.subplots()
-             fig.set_tight_layout(False)
+             fig.set_layout_engine("tight")
          
 
          if type(slice_select[0]) is str:
@@ -870,7 +870,7 @@ class experiment:
          
 
          plt.colorbar(p,ax=ax_img)
-         plt.tight_layout()
+         plt.gcf().set_layout_engine("tight")
 
          return ax_img
         

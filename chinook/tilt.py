@@ -7,7 +7,7 @@ Created on Fri Dec 28 13:33:59 2018
 """
 
 import numpy as np
-from collections import Iterable
+from collections.abc import Iterable
 import matplotlib.pyplot as plt
 
 

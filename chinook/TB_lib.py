@@ -459,7 +459,7 @@ class TB_model:
         
         if ax is None:
             fig=plt.figure()
-            fig.set_tight_layout(False)
+            fig.set_layout_engine("tight")
             ax=fig.add_subplot(111)
             
         ax.axhline(y=0,color='k',lw=1.5,ls='--')

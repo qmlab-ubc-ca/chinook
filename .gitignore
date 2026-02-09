@@ -3,3 +3,4 @@
 .vscode/settings.json
 build/
 chinook.egg-info/
+__pycache__/

@@ -1,0 +1,2 @@
+include chinook/*.txt
+include README.rst
