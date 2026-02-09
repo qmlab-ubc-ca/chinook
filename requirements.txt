@@ -1,5 +1,5 @@
-numpy==2.4
-matplotlib==3.10
-scipy==1.17
-chinook @ git+https://github.com/rpday/chinook.git@update-numpy
+numpy>=2
+matplotlib>=3.10
+scipy
+chinook @ git+https://github.com/qmlab-ubc-ca/chinook.git@update-numpy
 setuptools==80

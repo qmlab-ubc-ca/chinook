@@ -17,7 +17,7 @@ setup(name= 'chinook',
       author_email = 'ryanday7@gmail.com',
       description = 'Tools for tight-binding and simulation of ARPES',
       long_description=readme(),
-      url = 'https://github.com/rpday/chinook',
+      url = 'https://github.com/qmlab-ubc-ca/chinook',
       classifiers =[
 		'Development Status :: 4 - Beta',              
 		'License :: OSI Approved :: MIT License',              	

@@ -6,10 +6,10 @@ the functionality has been expanded (and will continue to do so) to allow for mo
 
 Here you will find all relevant modules and libraries for running calculations with this package.
 
-For any questions which you do not find explanations in the documentation files, please do not hesitate to contact me at
-rpday7_at_gmail_dot_com
+For any questions which you do not find explanations in the documentation files, please do not hesitate to contact us at
+ayching_at_phas_dot_ubc_dot_ca
 
 
 Thanks!
 
-Ryan Day
+Christine Au-Yeung
