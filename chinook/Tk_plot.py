@@ -133,11 +133,11 @@ if tk_found:
             ax2.tick_params(axis='both',labelsize=12)
             ax3.tick_params(axis='both',labelsize=12)
             
-            ax1.set_ylabel('Momentum y ($\AA^{-1}$)')
-            ax1.set_xlabel('Momentum x ($\AA^{-1}$)')
-            ax2.set_ylabel('Momentum y ($\AA^{-1}$)')
+            ax1.set_ylabel(r'Momentum y ($\AA^{-1}$)')
+            ax1.set_xlabel(r'Momentum x ($\AA^{-1}$)')
+            ax2.set_ylabel(r'Momentum y ($\AA^{-1}$)')
             ax2.set_xlabel('Energy (eV)')
-            ax3.set_ylabel('Momentum x ($\AA^{-1}$)')
+            ax3.set_ylabel(r'Momentum x ($\AA^{-1}$)')
             ax3.set_xlabel('Energy (eV)')
     
             plt_win_1 = FigureCanvasTkAgg(fig1,master=self.root)

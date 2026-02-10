@@ -18,7 +18,7 @@ Square Lattice
 
 The following tutorial is also available as an interactive *jupyter* notebook, available for download with the git repo_, in the examples folder. Alternatively, it can be :download:`downloaded here <downloads/introduction_to_chinook.ipynb>`.
 
-.. _repo: https://github.com/rpday/chinook
+.. _repo: https://github.com/qmlab-ubc-ca/chinook
 
 Before beginning, it is also worth noting that in the interest of maintaining an organized workspace, it can be beneficial to define a separate input script independent of the working experimental script. Examples of an :download:`input file <downloads/input_square.py>` and :download:`experiment script <downloads/tutorial_square.py>` are available for this exercise. 
 

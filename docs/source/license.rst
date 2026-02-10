@@ -22,4 +22,4 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 Contact
 =======
-Questions? Please contact Ryan Day at rpday7_at_gmail_dot_com.
+Questions? Please contact Christine Au-Yeung at ayching_at_phas_dot_ubc_dot_ca.

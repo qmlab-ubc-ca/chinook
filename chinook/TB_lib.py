@@ -460,7 +460,7 @@ class TB_model:
         
         if ax is None:
             fig=plt.figure()
-            fig.set_tight_layout(False)
+            fig.set_layout_engine("tight")
             ax=fig.add_subplot(111)
 
             

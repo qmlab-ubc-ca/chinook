@@ -26,12 +26,14 @@
 #SOFTWARE.
 
 import linecache
-import pkg_resources
-
+from chinook.resource_loader import load_text_lines
 
 
 a_file = 'atomic_mass.txt'
-filename = pkg_resources.resource_filename(__name__,a_file)
+
+def _lines():
+    return load_text_lines('chinook', a_file)
+
 def get_mass_from_number(N_at):
     '''
 
@@ -48,7 +50,8 @@ def get_mass_from_number(N_at):
     ***
     '''
     try:
-        return float(linecache.getline(filename,int(N_at)).split('\t')[2][:-1])
+        fields = _lines()[int(N_at) - 1].split('\t')
+        return float(fields[2])
     except IndexError:
         print('ERROR: Invalid atomic number, returning mass = 0.')
         return 0.0
@@ -70,7 +73,7 @@ def get_el_from_number(N_at):
     '''
     
     try:
-        return linecache.getline(filename,int(N_at)).split('\t')[1]
+        return _lines()[int(N_at) - 1].split('\t')[1]
     except IndexError:
         print('ERROR: Invalid atomic number, returning empty string.')
         return ''
@@ -92,12 +95,10 @@ def get_num_from_el(el):
     
     '''
     Z  = -1
-    with open(filename,'r') as mass:
-        for l in mass:
-            line = l.split('\t')
-            if line[1]==el:
-                Z = int(line[0])
-    mass.close()
+    for l in _lines():
+        line = l.split('\t')
+        if line[1] == el:
+            Z = int(line[0])
     if Z == -1:
         print('WARNING!! Invalid symbol passed. Returning with Z = 0')
         Z = 0

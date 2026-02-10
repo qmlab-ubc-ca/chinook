@@ -3,7 +3,7 @@ Python module for simulating matrix-elements in ARPES. Documentation, in additio
 
 R.P. Day, B. Zwartsenberg, I.S. Elfimov and A. Damascelli, npj Quantum Materials 4, 54 (2019)
 
-For any questions, please send us mail at rpday7@gmail.com
+For any questions, please send us mail at ayching_at_phas_dot_ubc_dot_ca
 
 Thanks!
 

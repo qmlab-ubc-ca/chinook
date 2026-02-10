@@ -61,12 +61,12 @@ def colourmaps():
         col_arr[:,-1] = np.linspace(0,1,nc)
         map_obj = LinearSegmentedColormap.from_list(name=cname[ii],colors=col_arr)
         
-        plt.register_cmap(cmap=map_obj)
+        plt.colormaps.register(map_obj, name=cname[ii], force=True)
     
     col_arr = cm.RdBu(range(nc))
     col_arr[:,-1] = abs(np.linspace(-1,1,nc))
     map_obj = LinearSegmentedColormap.from_list(name='RdBu_alpha',colors=col_arr)
-    plt.register_cmap(cmap=map_obj)
+    plt.colormaps.register(map_obj, name='RdBu_alpha', force=True)
 
 colourmaps()
 
@@ -360,7 +360,7 @@ def O_path(Operator,TB,Kobj=None,vlims=None,Elims=None,degen=False,plot=True,ax=
 
         if ax is None:
             fig,ax = plt.subplots(1,1)
-            fig.set_tight_layout(False)
+            fig.set_layout_engine("tight")
 
         for b in TB.Kobj.kcut_brk:
             ax.axvline(x = b,color = 'grey',ls='--',lw=1.0)
