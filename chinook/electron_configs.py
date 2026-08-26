@@ -41,7 +41,7 @@
 import numpy as np
 import scipy.special as sc
 import matplotlib.pyplot as plt
-import pkg_resources
+import importlib.resources
 import linecache
 from math import factorial
 from math import gamma
@@ -62,7 +62,7 @@ ndic={1:1,2:2,3:3,4:3.7,5:4,6:4.2}
 
 textnm="electron_configs.txt"
 
-filename = pkg_resources.resource_filename(__name__,textnm)
+filename = str(importlib.resources.files('chinook') / textnm)
 
 def get_con(filename,Z):
     

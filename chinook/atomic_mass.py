@@ -26,12 +26,12 @@
 #SOFTWARE.
 
 import linecache
-import pkg_resources
+import importlib.resources
 
 
 
 a_file = 'atomic_mass.txt'
-filename = pkg_resources.resource_filename(__name__,a_file)
+filename = str(importlib.resources.files('chinook') / a_file)
 def get_mass_from_number(N_at):
     '''
 
