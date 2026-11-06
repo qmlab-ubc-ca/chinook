@@ -76,7 +76,7 @@ class interface:
         '''
         
         self.fig = plt.figure(figsize=(11,11))
-        self.fig.canvas.set_window_title('Chinook Orbital Mapper')
+        self.fig.canvas.manager.set_window_title('Chinook Orbital Mapper')
         self.ax1 = plt.subplot2grid((10,10),(0,0),rowspan=6,colspan=6,fig=self.fig) #main figure
         self.ax2 = plt.subplot2grid((10,10),(0,7),rowspan=6,colspan=3,fig=self.fig) #subfigure, right
         self.ax3 = plt.subplot2grid((10,10),(7,0),rowspan=3,colspan=6,fig=self.fig) #subfigure, bottom
@@ -208,7 +208,7 @@ class interface:
         cid = self.fig.canvas.mpl_connect('button_press_event',onclick)
         self.slide_w.on_changed(img_slide)
         self.radio_ax.on_clicked(button_click)
-        plt.tight_layout()
+        plt.gcf().set_layout_engine("tight")
         plt.show()
         
     def find_cursor(self):
