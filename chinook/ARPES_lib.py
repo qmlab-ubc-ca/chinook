@@ -821,7 +821,10 @@ class experiment:
              
          if ax_img is None:
              fig,ax_img = plt.subplots()
-             fig.set_tight_layout(False)
+             if hasattr(fig, "set_layout_engine"):
+                 fig.set_layout_engine("none")
+             else:
+                 fig.set_tight_layout(False)
          
 
          if type(slice_select[0]) is str:

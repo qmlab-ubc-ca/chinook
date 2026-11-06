@@ -55,18 +55,22 @@ def colourmaps():
     cmaps=[cm.Blues,cm.Greens,cm.Reds,cm.Purples,cm.Greys]
     cname = ['Blues_alpha','Greens_alpha','Reds_alpha','Purples_alpha','Greys_alpha']
     nc = 256
+    if hasattr(plt, "colormaps"):
+        register_cmap = plt.colormaps.register
+    else:
+        register_cmap = plt.register_cmap
 
     for ii in range(len(cmaps)):
         col_arr = cmaps[ii](range(nc))
         col_arr[:,-1] = np.linspace(0,1,nc)
         map_obj = LinearSegmentedColormap.from_list(name=cname[ii],colors=col_arr)
         
-        plt.register_cmap(cmap=map_obj)
+        register_cmap(cmap=map_obj)
     
     col_arr = cm.RdBu(range(nc))
     col_arr[:,-1] = abs(np.linspace(-1,1,nc))
     map_obj = LinearSegmentedColormap.from_list(name='RdBu_alpha',colors=col_arr)
-    plt.register_cmap(cmap=map_obj)
+    register_cmap(cmap=map_obj)
 
 colourmaps()
 
@@ -360,7 +364,10 @@ def O_path(Operator,TB,Kobj=None,vlims=None,Elims=None,degen=False,plot=True,ax=
 
         if ax is None:
             fig,ax = plt.subplots(1,1)
-            fig.set_tight_layout(False)
+            if hasattr(fig, "set_layout_engine"):
+                fig.set_layout_engine("none")
+            else:
+                fig.set_tight_layout(False)
 
         for b in TB.Kobj.kcut_brk:
             ax.axvline(x = b,color = 'grey',ls='--',lw=1.0)
