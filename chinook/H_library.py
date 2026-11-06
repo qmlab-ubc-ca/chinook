@@ -564,7 +564,7 @@ def Lz(l):
 
 
 
-def AFM_order(basis,dS,p_up,p_dn):
+def AFM_order(basis,dS,p_up_list,p_dn_list):
   
   '''
   Add antiferromagnetism to the tight-binding model, by adding a different on-site energy to 
@@ -586,17 +586,35 @@ def AFM_order(basis,dS,p_up,p_dn):
   ***
   '''
   h_AF = []
-  for bi in basis:
-      if np.linalg.norm(bi.pos-p_up)==0:
-          if bi.spin<0:
-              h_AF.append([bi.index,bi.index,0,0,0,dS])
-          else:
-              h_AF.append([bi.index,bi.index,0,0,0,-dS])
-      elif np.linalg.norm(bi.pos-p_dn)==0:
-          if bi.spin<0:
-              h_AF.append([bi.index,bi.index,0,0,0,-dS])
-          else:
-              h_AF.append([bi.index,bi.index,0,0,0,dS])
+
+  if len(dS)>1:
+      assert len(dS) == len(p_up_list)
+      for i in range(len(dS)):
+          up_list = p_up_list[i]
+          dn_list = p_dn_list[i]
+          for p_up in up_list:
+              if basis[p_up].spin<0:
+                h_AF.append([p_up,p_up,0,0,0,dS[i]])
+              else:
+                h_AF.append([p_up,p_up,0,0,0,-dS[i]])
+          for p_dn in dn_list:  
+              if basis[p_dn].spin<0:
+                h_AF.append([p_dn,p_dn,0,0,0,-dS[i]])
+              else:
+                h_AF.append([p_dn,p_dn,0,0,0,dS[i]])
+          
+  else:
+    for p_up in p_up_list: 
+        if basis[p_up].spin<0:
+            h_AF.append([p_up,p_up,0,0,0,dS])
+        else:
+            h_AF.append([p_up,p_up,0,0,0,-dS])
+    for p_dn in p_dn_list:  
+        if basis[p_dn].spin<0:
+            h_AF.append([p_dn,p_dn,0,0,0,-dS])
+        else:
+            h_AF.append([p_dn,p_dn,0,0,0,dS])
+  print('print list of dS',h_AF)
   return h_AF
     
     

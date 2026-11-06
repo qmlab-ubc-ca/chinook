@@ -249,6 +249,18 @@ def hydrogenic_exec(Z_ind,orb):
     
     return lambda_gen()
 
+def hydrogenic_exec_ext(Z_ind,orb,ext,scale_orb):
+    
+    mn = am.get_mass_from_number(Z_ind)
+    au = (4*np.pi*Eo*hb**2*(mn*mp+me))/(q**2*mn*mp*me)
+    n = int(orb[0])
+    l = int(orb[1])
+    
+    def lambda_gen():
+        return lambda r: scale_orb*(np.sqrt((2*ext*Z_ind*A/(n*au))**3*factorial(n-l-1)/(2*n*factorial(n+l)))*np.exp(-ext*Z_ind*r*A/(n*au))*(2*ext*Z_ind*r*A/(n*au))**l*sc.genlaguerre(n-l-1,l*2+1)(2*ext*Z_ind*r*A/(n*au)))
+    
+    return lambda_gen()
+
 if __name__=="__main__":
     mn = am.get_mass_from_number(6)
     r = np.linspace(0,10,1000)

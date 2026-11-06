@@ -397,6 +397,7 @@ def O_path(Operator,TB,Kobj=None,vlims=None,Elims=None,degen=False,plot=True,ax=
         
         return O_vals,ax
     else:
+        #print(O_vals)
         return O_vals,None
 
 
@@ -435,7 +436,7 @@ def degen_Ovals(Oper_exp,Energy):
                 val = Energy[ki,bi]
     return O_copy  
 
-def operator_projected_fermi_surface(TB, matrix, npts=100, kfix=(2,0), energy=0, shift=np.array([0,0,0]),degen=True, fig=None, cmap=cm.rainbow, scale=20):
+def operator_projected_fermi_surface(TB, matrix, npts=100, kfix=(2,0), energy=0, shift=np.array([0,0,0]),degen=True, fig=None, cmap=cm.rainbow, scale=20,lin_com=False):
     """
     Simple 2D-projected FS with operator expectation values plot over the FS contours.
 
@@ -472,11 +473,22 @@ def operator_projected_fermi_surface(TB, matrix, npts=100, kfix=(2,0), energy=0,
         kpoints[:,(kfix[0]+2)%3] = FS[fi][:,1]
         TB.Kobj.kpts = kpoints
         TB.solve_H()
-        expectation,_ = O_path(matrix, TB, plot=False, degen=degen)
-        Ovals[fi] = expectation[:,fi]
-        fig.axes[0].scatter(FS[fi][:,0], FS[fi][:,1], c=Ovals[fi],s=Ovals[fi]*scale, cmap=cmap)
 
-    return fig              
+        if lin_com:
+            Ovals_temp = {}
+            expectation1 = np.zeros(len(matrix))
+            expectation2 = np.zeros(len(matrix))
+            expectation1,_ = O_path(matrix[0],TB, plot=False, degen=degen)
+            expectation2,_ = O_path(matrix[1],TB, plot=False, degen=degen)
+            Ovals[fi] = expectation1[:,fi]-expectation2[:,fi]
+        else:
+            expectation,_ = O_path(matrix, TB, plot=False, degen=degen)
+            Ovals[fi] = expectation[:,fi]
+        #print(Ovals[fi])
+        fig.axes[0].scatter(FS[fi][:,0], FS[fi][:,1], c=Ovals[fi],s=abs(Ovals[fi])*scale, cmap=cmap)
+        plt.savefig('FS_proj.pdf', transparent=True)
+        plt.axis('equal')
+    return fig, Ovals              
 
 def O_surf(O,TB,ktuple,Ef,tol,vlims=(0,0),ax=None):
     
