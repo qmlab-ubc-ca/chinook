@@ -216,7 +216,7 @@ class experiment:
         try:
             self.scaling_orb = ARPES_dict['scaling_orb']
         except KeyError:
-            self.scaling = np.array([1])
+            self.scaling_orb = np.array([1])
         try:
             self.spectral_func = ARPES_dict['spectral']
         except KeyError:
