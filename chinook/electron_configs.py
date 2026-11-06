@@ -41,7 +41,7 @@
 import numpy as np
 import scipy.special as sc
 import matplotlib.pyplot as plt
-import pkg_resources
+from pathlib import Path
 import linecache
 from math import factorial
 from math import gamma
@@ -62,7 +62,7 @@ ndic={1:1,2:2,3:3,4:3.7,5:4,6:4.2}
 
 textnm="electron_configs.txt"
 
-filename = pkg_resources.resource_filename(__name__,textnm)
+filename = str(Path(__file__).resolve().with_name(textnm))
 
 def get_con(filename,Z):
     

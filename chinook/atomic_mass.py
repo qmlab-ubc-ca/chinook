@@ -26,12 +26,12 @@
 #SOFTWARE.
 
 import linecache
-import pkg_resources
+from pathlib import Path
 
 
 
 a_file = 'atomic_mass.txt'
-filename = pkg_resources.resource_filename(__name__,a_file)
+filename = str(Path(__file__).resolve().with_name(a_file))
 def get_mass_from_number(N_at):
     '''
 
