@@ -152,7 +152,8 @@ ARPES Experiment
    | (FWHM) resolution, in eV, 1/A."
    "SE", "Yes", "list", "['constant', 0.05]", "| Self-Energy, 
    | see ARPES for further details"
-   "angle", "No", "float", "1.59", "Azimuthal rotation, in radians."
+   "angle", "No", "float", "1.59", "| Sample azimuth in radians. Both coordinate modes
+   | rotate the lab-frame momentum into the crystal frame."
    "W", "No", "float", "4.5", "Work function, in eV"
    "Vo", "No", "float", "11.5", "| Inner potential in eV. A positive value computes kz
    | from photon energy, work function, and in-plane momentum

@@ -15,14 +15,15 @@ class MeshModel:
         return np.zeros((len(self.Kobj.kpts), 1)), None
 
 
+@pytest.mark.parametrize("angle", [0.0, 0.8])
 @pytest.mark.parametrize("vo", [12.0, -1.0])
-def test_angle_mesh_matches_momentum_mesh_at_same_emission_directions(vo):
+def test_angle_mesh_matches_momentum_mesh_at_same_emission_directions(vo, angle):
     hv, work_function, fixed_kz = 100.0, 4.5, 0.25
 
     def mesh(**grid):
         scan = experiment(MeshModel(), {
             "cube": {**grid, "E": [-0.3, 0.1, 5], "kz": fixed_kz},
-            "hv": hv, "W": work_function, "Vo": vo,
+            "hv": hv, "W": work_function, "Vo": vo, "angle": angle,
             "resolution": {"E": 0.04, "k": 0.02}, "SE": None,
         })
         scan.diagonalize(True)
