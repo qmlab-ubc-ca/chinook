@@ -431,12 +431,20 @@ def proj_mat(proj,lenbasis):
     
     proj_vect = np.zeros(lenbasis,dtype=complex)
 
+    proj = np.array(proj)
     if len(np.shape(proj))==1:
-        proj_vect[proj] = 1/(len(proj))**0.5
+        if np.any(np.mod(proj, 1) != 0):
+            raise ValueError("Orbital indices must be integers.")
+        proj_vect[proj.astype(int)] = 1/(len(proj))**0.5
     
     elif len(np.shape(proj))==2:
-        proj_vect[proj[:,0]] = proj[:,1]
-        proj_vect/=np.sqrt(np.einsum('i,i',np.conj(proj_vect),proj_vect))
+        indices = proj[:, 0]
+        if np.any(np.mod(indices, 1) != 0):
+            raise ValueError("Orbital indices must be integers.")
+        proj_vect[indices.astype(int)] = proj[:, 1]
+        norm = np.sqrt(np.einsum('i,i',np.conj(proj_vect),proj_vect))
+        if norm > 0:
+            proj_vect/=norm
     
     projector*=np.real(proj_vect)
     
