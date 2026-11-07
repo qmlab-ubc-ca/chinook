@@ -307,9 +307,10 @@ class experiment:
     
             self.X = np.reshape(k_arr[:,0],(self.cube[1][2],self.cube[0][2]))
             self.Y = np.reshape(k_arr[:,1],(self.cube[1][2],self.cube[0][2]))
-            print(self.X.min(),self.X.max())
-    
-            self.ph = np.arctan2(k_arr[:,1],k_arr[:,0])
+            # Keep lab-frame coordinates for matrix elements and rotate the TB mesh.
+            k_arr, self.ph = K_lib.kmesh(
+                self.ang, self.X, self.Y, self.kz, *Vo_args
+            )
     
         self.TB.Kobj = K_lib.kpath(k_arr)
 #        if diagonalize:
