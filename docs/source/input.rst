@@ -138,7 +138,7 @@ ARPES Experiment
    | 'E' : [-2,0.1,1000],
    | 'kz' : 0.0}", "| Region of interest, X, and Y
    | are momentum range, E is energy. 
-   | Fixed kz only. For a single slice,
+   | Set kz for a fixed perpendicular momentum. For a single slice,
    | can use e.g. 'X' : [0,0,1] .Can also
    | pass angles (rad) using 'Tx', 'Ty'
    | instead of 'X', 'Y'"
@@ -154,7 +154,9 @@ ARPES Experiment
    | see ARPES for further details"
    "angle", "No", "float", "1.59", "Azimuthal rotation, in radians."
    "W", "No", "float", "4.5", "Work function, in eV"
-   "Vo", "No", "float", "11.5", "Inner potential in eV, for kz-dependence"
+   "Vo", "No", "float", "11.5", "| Inner potential in eV. A positive value computes kz
+   | from photon energy, work function, and in-plane momentum
+   | in both modes, overriding a fixed kz."
    "slab", "No", "bool", "True", "| Specify if using a slab geometry,
    | will impose mean-free path. This
    | also truncates the eigenvectors."
